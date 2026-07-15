@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>영상 GIF 만들기</title>
   <meta name="description" content="모바일 브라우저에서 영상 파일을 3~5초 GIF로 변환합니다.">
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
   <main class="app">
@@ -45,7 +45,7 @@
         <button id="playButton" type="button" disabled>재생</button>
 
         <label class="slider-block">
-          <span>시작 시간 <b id="startLabel">0.0 (초)</b></span>
+          <span>GIF 구간 <b id="startLabel">0.0 (초) ~ 5.0 (초)</b></span>
           <input id="seek" type="range" min="0" max="0" value="0" step="0.1" disabled>
         </label>
 
@@ -91,6 +91,7 @@
     <section id="result" class="result" hidden>
       <h2>완성된 GIF</h2>
       <img id="resultImage" alt="생성된 GIF 미리보기">
+      <p id="resultMeta" class="result-meta"></p>
 
     </section>
 
@@ -98,7 +99,7 @@
   </main>
 
   <script src="vendor/gif.js"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
 
