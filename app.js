@@ -49,6 +49,10 @@ function gifDurationValue() {
   return Number(gifDuration.value) || 0;
 }
 
+function hasEnoughGifRange(start, duration) {
+  return videoDuration() - start >= duration - 0.05;
+}
+
 function updateSeekFill() {
   const total = videoDuration();
   const start = Number(seek.value) || 0;
@@ -194,6 +198,13 @@ makeButton.addEventListener("click", async () => {
     return;
   }
 
+  const start = Number(seek.value) || 0;
+  const duration = Number(gifDuration.value);
+  if (!hasEnoughGifRange(start, duration)) {
+    setStatus(`선택한 구간이 ${duration} (초)보다 짧습니다. 시작 시간을 앞쪽으로 옮기거나 GIF 길이를 줄여 주세요.`);
+    return;
+  }
+
   makeButton.disabled = true;
   playButton.disabled = true;
   progress.hidden = false;
@@ -204,8 +215,6 @@ makeButton.addEventListener("click", async () => {
   playButton.textContent = "재생";
 
   try {
-    const start = Number(seek.value);
-    const duration = Number(gifDuration.value);
     const width = Number(gifWidth.value);
     const fps = Number(gifFps.value);
     const frameCount = Math.max(1, Math.round(duration * fps));
