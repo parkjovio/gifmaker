@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>영상 GIF 만들기</title>
+  <meta name="description" content="모바일 브라우저에서 영상 파일을 3~5초 GIF로 변환합니다.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>영상 GIF 만들기</h1>
+        <p>휴대폰에서 영상을 고르고 원하는 구간을 GIF로 저장하세요.</p>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="GIF 만들기">
+      <div class="preview">
+        <video id="video" playsinline muted preload="metadata"></video>
+        <div id="emptyState" class="empty-state">
+          <strong>영상 선택</strong>
+          <span>MP4, MOV, WEBM 파일을 불러올 수 있습니다.</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label class="file-button">
+          <input id="fileInput" type="file" accept="video/*">
+          영상 선택
+        </label>
+
+        <button id="playButton" type="button" disabled>재생</button>
+
+        <label class="slider-block">
+          <span>시작 시간 <b id="startLabel">0.0 (초)</b></span>
+          <input id="seek" type="range" min="0" max="0" value="0" step="0.1" disabled>
+        </label>
+
+        <div class="time-row">
+          <span id="currentTime">0.0 (초)</span>
+          <span id="durationTime">0.0 (초)</span>
+        </div>
+
+        <div class="options">
+          <label>
+            GIF 길이
+            <select id="gifDuration">
+              <option value="3">3 (초)</option>
+              <option value="4">4 (초)</option>
+              <option value="5" selected>5 (초)</option>
+            </select>
+          </label>
+
+          <label>
+            가로 크기
+            <select id="gifWidth">
+              <option value="360">360px</option>
+              <option value="480">480px</option>
+              <option value="640" selected>640px</option>
+            </select>
+          </label>
+
+          <label>
+            초당 프레임
+            <select id="gifFps">
+              <option value="10">10</option>
+              <option value="12" selected>12</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="makeButton" class="primary" type="button" disabled>GIF 만들기</button>
+        <progress id="progress" max="100" value="0" hidden></progress>
+        <p id="status" class="status">영상을 선택하면 미리보기와 시간 이동 게이지가 표시됩니다.</p>
+      </div>
+    </section>
+
+    <section id="result" class="result" hidden>
+      <h2>완성된 GIF</h2>
+      <img id="resultImage" alt="생성된 GIF 미리보기">
+      <a id="downloadLink" class="download" download="converted.gif">GIF 저장하기</a>
+    </section>
+  </main>
+
+  <script src="vendor/gif.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
