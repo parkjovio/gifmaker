@@ -224,6 +224,14 @@ progress {
   background: #05070a;
 }
 
+.credit {
+  margin-top: 18px;
+  padding: 14px 2px 4px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 @media (max-width: 760px) {
   .app {
     padding: 14px;
