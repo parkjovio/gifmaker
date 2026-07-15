@@ -185,20 +185,37 @@ video.addEventListener("ended", () => {
 video.addEventListener("play", updatePlayButton);
 video.addEventListener("pause", updatePlayButton);
 
-async function togglePlayback() {
-  if (video.paused) {
+async function playVideo() {
+  if (video.src && video.paused) {
     await video.play();
-  } else {
+  }
+  updatePlayButton();
+}
+
+function pauseVideo() {
+  if (video.src && !video.paused) {
     video.pause();
   }
   updatePlayButton();
 }
 
-playButton.addEventListener("click", togglePlayback);
-video.addEventListener("click", () => {
-  if (video.src) {
-    togglePlayback();
+async function togglePlayback(event) {
+  if (event) {
+    event.stopPropagation();
   }
+
+  if (video.paused) {
+    await playVideo();
+  } else {
+    pauseVideo();
+  }
+}
+
+playButton.addEventListener("click", togglePlayback);
+video.addEventListener("click", pauseVideo);
+video.addEventListener("touchend", event => {
+  event.preventDefault();
+  pauseVideo();
 });
 
 playSeek.addEventListener("input", () => {
