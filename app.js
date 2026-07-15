@@ -2,7 +2,9 @@ const video = document.getElementById("video");
 const emptyState = document.getElementById("emptyState");
 const fileInput = document.getElementById("fileInput");
 const playButton = document.getElementById("playButton");
-const seek = document.getElementById("seek");
+const playSeek = document.getElementById("playSeek");
+const segmentSeek = document.getElementById("segmentSeek");
+const playLabel = document.getElementById("playLabel");
 const startLabel = document.getElementById("startLabel");
 const currentTime = document.getElementById("currentTime");
 const durationTime = document.getElementById("durationTime");
@@ -55,24 +57,33 @@ function hasEnoughGifRange(start, duration) {
 
 function updateSeekFill() {
   const total = videoDuration();
-  const start = Number(seek.value) || 0;
+  const start = Number(segmentSeek.value) || 0;
   const end = Math.min(total, start + gifDurationValue());
 
   if (!total) {
-    seek.style.removeProperty("--segment-start");
-    seek.style.removeProperty("--segment-end");
+    playSeek.style.removeProperty("--play-progress");
+    segmentSeek.style.removeProperty("--segment-start");
+    segmentSeek.style.removeProperty("--segment-end");
     return;
   }
 
-  seek.style.setProperty("--segment-start", `${Math.max(0, Math.min(100, start / total * 100))}%`);
-  seek.style.setProperty("--segment-end", `${Math.max(0, Math.min(100, end / total * 100))}%`);
+  playSeek.style.setProperty("--play-progress", `${Math.max(0, Math.min(100, (video.currentTime || 0) / total * 100))}%`);
+  segmentSeek.style.setProperty("--segment-start", `${Math.max(0, Math.min(100, start / total * 100))}%`);
+  segmentSeek.style.setProperty("--segment-end", `${Math.max(0, Math.min(100, end / total * 100))}%`);
+}
+
+function updatePlayButton() {
+  playButton.textContent = video.paused ? "▶" : "❚❚";
+  playButton.setAttribute("aria-label", video.paused ? "재생" : "일시정지");
+  playButton.classList.toggle("is-playing", !video.paused);
 }
 
 function updateTimeLabels() {
   const duration = videoDuration();
   const current = video.currentTime || 0;
-  const start = Number(seek.value) || 0;
+  const start = Number(segmentSeek.value) || 0;
   const end = Math.min(duration, start + gifDurationValue());
+  playLabel.textContent = secondsLabel(current);
   currentTime.textContent = secondsLabel(current);
   durationTime.textContent = secondsLabel(duration);
   startLabel.textContent = `${secondsLabel(start)} ~ ${secondsLabel(end)}`;
@@ -129,7 +140,8 @@ fileInput.addEventListener("change", () => {
   }
 
   sourceUrl = URL.createObjectURL(file);
-  seek.value = 0;
+  playSeek.value = 0;
+  segmentSeek.value = 0;
   video.currentTime = 0;
   updateTimeLabels();
   video.src = sourceUrl;
@@ -137,7 +149,8 @@ fileInput.addEventListener("change", () => {
   emptyState.hidden = true;
   playButton.disabled = false;
   makeButton.disabled = false;
-  seek.disabled = false;
+  playSeek.disabled = false;
+  segmentSeek.disabled = false;
   result.hidden = true;
   resultMeta.textContent = "";
   downloadLink.classList.add("disabled");
@@ -148,48 +161,66 @@ fileInput.addEventListener("change", () => {
 
 video.addEventListener("loadedmetadata", () => {
   const duration = Number.isFinite(video.duration) ? video.duration : 0;
-  seek.max = Math.max(0, duration);
-  seek.value = 0;
+  playSeek.max = Math.max(0, duration);
+  segmentSeek.max = Math.max(0, duration);
+  playSeek.value = 0;
+  segmentSeek.value = 0;
   video.currentTime = 0;
+  updatePlayButton();
   updateTimeLabels();
-  setStatus("노란 구간이 GIF로 만들어질 부분입니다. 게이지를 움직여 구간을 옮기세요.");
+  setStatus("재생 위치와 GIF 구간을 따로 조절할 수 있습니다. 노란 구간이 GIF로 만들어질 부분입니다.");
 });
 
 video.addEventListener("timeupdate", () => {
   if (!isSeekingFromSlider) {
-    seek.value = video.currentTime || 0;
+    playSeek.value = video.currentTime || 0;
   }
   updateTimeLabels();
 });
 
 video.addEventListener("ended", () => {
-  playButton.textContent = "재생";
+  updatePlayButton();
 });
 
-playButton.addEventListener("click", async () => {
+video.addEventListener("play", updatePlayButton);
+video.addEventListener("pause", updatePlayButton);
+
+async function togglePlayback() {
   if (video.paused) {
     await video.play();
-    playButton.textContent = "일시정지";
   } else {
     video.pause();
-    playButton.textContent = "재생";
+  }
+  updatePlayButton();
+}
+
+playButton.addEventListener("click", togglePlayback);
+video.addEventListener("click", () => {
+  if (video.src) {
+    togglePlayback();
   }
 });
 
-seek.addEventListener("input", () => {
+playSeek.addEventListener("input", () => {
   isSeekingFromSlider = true;
   updateTimeLabels();
 });
 
-seek.addEventListener("change", async () => {
+playSeek.addEventListener("change", async () => {
   try {
-    await seekVideo(Number(seek.value));
+    await seekVideo(Number(playSeek.value));
   } finally {
     isSeekingFromSlider = false;
     updateTimeLabels();
   }
 });
 
+segmentSeek.addEventListener("input", updateTimeLabels);
+segmentSeek.addEventListener("change", async () => {
+  await seekVideo(Number(segmentSeek.value));
+  playSeek.value = video.currentTime || 0;
+  updateTimeLabels();
+});
 gifDuration.addEventListener("change", updateTimeLabels);
 
 makeButton.addEventListener("click", async () => {
@@ -198,7 +229,7 @@ makeButton.addEventListener("click", async () => {
     return;
   }
 
-  const start = Number(seek.value) || 0;
+  const start = Number(segmentSeek.value) || 0;
   const duration = Number(gifDuration.value);
   if (!hasEnoughGifRange(start, duration)) {
     setStatus(`선택한 구간이 ${duration} (초)보다 짧습니다. 시작 시간을 앞쪽으로 옮기거나 GIF 길이를 줄여 주세요.`);
@@ -212,7 +243,7 @@ makeButton.addEventListener("click", async () => {
   result.hidden = true;
   resultMeta.textContent = "";
   video.pause();
-  playButton.textContent = "재생";
+  updatePlayButton();
 
   try {
     const width = Number(gifWidth.value);
