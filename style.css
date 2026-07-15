@@ -271,25 +271,6 @@ input[type="range"] {
   color: var(--muted);
 }
 
-.privacy-option {
-  display: inline-grid;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
-  align-items: center;
-  justify-content: start;
-  gap: 8px;
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.privacy-option input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--accent);
-}
-
 select {
   width: 100%;
   padding: 0 8px;
