@@ -1,4 +1,5 @@
 const video = document.getElementById("video");
+const preview = document.querySelector(".preview");
 const emptyState = document.getElementById("emptyState");
 const fileInput = document.getElementById("fileInput");
 const playButton = document.getElementById("playButton");
@@ -212,11 +213,19 @@ async function togglePlayback(event) {
 }
 
 playButton.addEventListener("click", togglePlayback);
-video.addEventListener("click", pauseVideo);
-video.addEventListener("touchend", event => {
+
+function pauseFromPreview(event) {
+  if (!video.src || video.paused || event.target.closest("button")) {
+    return;
+  }
+
   event.preventDefault();
   pauseVideo();
-});
+}
+
+preview.addEventListener("click", pauseFromPreview);
+preview.addEventListener("pointerup", pauseFromPreview);
+preview.addEventListener("touchend", pauseFromPreview, { passive: false });
 
 playSeek.addEventListener("input", () => {
   isSeekingFromSlider = true;
