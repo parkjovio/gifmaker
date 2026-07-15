@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: light;
   --bg: #f5f7fa;
   --panel: #ffffff;
@@ -129,9 +129,46 @@ button,
   cursor: pointer;
 }
 
-button:disabled {
+.action-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.step-button {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(23, 105, 224, 0.12);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.primary .step-number,
+.download .step-number {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+button:disabled,
+.download.disabled {
   cursor: not-allowed;
   opacity: 0.5;
+  pointer-events: none;
 }
 
 .file-button input {
@@ -185,7 +222,7 @@ input[type="range"] {
 .options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .options label {
@@ -197,7 +234,7 @@ input[type="range"] {
 
 select {
   width: 100%;
-  padding: 0 10px;
+  padding: 0 8px;
   background: #fff;
   color: var(--ink);
 }
@@ -246,7 +283,36 @@ progress {
     aspect-ratio: 4 / 3;
   }
 
+  .action-group {
+    gap: 6px;
+  }
+
+  .step-button {
+    min-height: 42px;
+    padding: 0 6px;
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .step-number {
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+  }
+
   .options {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .options label {
+    font-size: 12px;
+  }
+
+  select {
+    min-height: 40px;
+    padding: 0 4px;
+    font-size: 13px;
   }
 }
+
