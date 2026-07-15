@@ -201,6 +201,36 @@ button:disabled,
   background: var(--accent-strong);
 }
 
+.step-button.step-select {
+  border-color: #1769e0;
+  background: #1769e0;
+  color: #fff;
+}
+
+.step-button.step-make {
+  border-color: #16834a;
+  background: #16834a;
+  color: #fff;
+}
+
+.step-button.step-save {
+  border-color: #8a4a0a;
+  background: #8a4a0a;
+  color: #fff;
+}
+
+.step-button.step-select:active {
+  background: #0f56bd;
+}
+
+.step-button.step-make:active {
+  background: #11683b;
+}
+
+.step-button.step-save:active {
+  background: #6f3a07;
+}
+
 .slider-block {
   display: grid;
   gap: 8px;
