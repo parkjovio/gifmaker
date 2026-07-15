@@ -136,32 +136,41 @@ button,
 }
 
 .step-button {
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
   justify-content: center;
-  gap: 7px;
   min-width: 0;
   padding: 0 10px;
-  font-weight: 700;
+  font-weight: 800;
   white-space: nowrap;
 }
 
-.step-number {
-  display: inline-grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(23, 105, 224, 0.12);
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 800;
+.step-select {
+  border-color: #1769e0;
+  background: #1769e0;
+  color: #fff;
 }
 
-.primary .step-number,
-.download .step-number {
-  background: rgba(255, 255, 255, 0.2);
+.step-make {
+  border-color: #16834a;
+  background: #16834a;
   color: #fff;
+}
+
+.step-save {
+  border-color: #8a4a0a;
+  background: #8a4a0a;
+  color: #fff;
+}
+
+.step-select:active {
+  background: #0f56bd;
+}
+
+.step-make:active {
+  background: #11683b;
+}
+
+.step-save:active {
+  background: #6f3a07;
 }
 
 button:disabled,
@@ -290,14 +299,7 @@ progress {
   .step-button {
     min-height: 42px;
     padding: 0 6px;
-    gap: 4px;
     font-size: 13px;
-  }
-
-  .step-number {
-    width: 18px;
-    height: 18px;
-    font-size: 11px;
   }
 
   .options {
@@ -315,4 +317,5 @@ progress {
     font-size: 13px;
   }
 }
+
 
