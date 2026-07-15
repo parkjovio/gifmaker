@@ -89,6 +89,38 @@ h1 {
   background: #05070a;
 }
 
+.video-play-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 74px;
+  height: 74px;
+  min-height: 74px;
+  padding: 0 0 0 4px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  background: rgba(5, 7, 10, 0.58);
+  color: #fff;
+  font-size: 34px;
+  line-height: 1;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+}
+
+.video-play-button:disabled {
+  display: none;
+}
+
+.video-play-button.is-playing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.video-play-button:active {
+  background: rgba(5, 7, 10, 0.76);
+}
+
 video {
   display: block;
   width: 100%;
@@ -270,6 +302,19 @@ input[type="range"] {
   border-radius: 999px;
   appearance: none;
   accent-color: var(--accent);
+}
+
+.play-range {
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--play-progress, 0%),
+    #cfd6e3 var(--play-progress, 0%),
+    #cfd6e3 100%
+  );
+}
+
+.segment-range {
   background: linear-gradient(
     to right,
     #cfd6e3 0%,
@@ -379,6 +424,13 @@ progress {
   .preview {
     min-height: 240px;
     aspect-ratio: 4 / 3;
+  }
+
+  .video-play-button {
+    width: 62px;
+    height: 62px;
+    min-height: 62px;
+    font-size: 28px;
   }
 
   .topbar {
