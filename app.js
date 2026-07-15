@@ -1,4 +1,4 @@
-const video = document.getElementById("video");
+﻿const video = document.getElementById("video");
 const emptyState = document.getElementById("emptyState");
 const fileInput = document.getElementById("fileInput");
 const playButton = document.getElementById("playButton");
@@ -93,6 +93,9 @@ fileInput.addEventListener("change", () => {
   makeButton.disabled = false;
   seek.disabled = false;
   result.hidden = true;
+  downloadLink.classList.add("disabled");
+  downloadLink.setAttribute("aria-disabled", "true");
+  downloadLink.removeAttribute("href");
   setStatus("영상을 불러오는 중입니다...");
 });
 
@@ -193,6 +196,8 @@ makeButton.addEventListener("click", async () => {
       resultImage.src = resultUrl;
       downloadLink.href = resultUrl;
       downloadLink.download = `gif-${duration}sec-${width}px.gif`;
+      downloadLink.classList.remove("disabled");
+      downloadLink.setAttribute("aria-disabled", "false");
       result.hidden = false;
       progress.value = 100;
       progress.hidden = true;
@@ -210,3 +215,4 @@ makeButton.addEventListener("click", async () => {
     setStatus(error.message || "GIF를 만들 수 없습니다.");
   }
 });
+
