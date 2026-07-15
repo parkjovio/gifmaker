@@ -29,7 +29,23 @@ body {
 }
 
 .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   padding: 10px 2px 18px;
+}
+
+.topbar > div {
+  min-width: 0;
+}
+
+.brand-logo {
+  display: block;
+  width: clamp(88px, 18vw, 150px);
+  max-height: 72px;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 h1,
@@ -320,6 +336,15 @@ progress {
   .preview {
     min-height: 240px;
     aspect-ratio: 4 / 3;
+  }
+
+  .topbar {
+    gap: 10px;
+  }
+
+  .brand-logo {
+    width: clamp(72px, 24vw, 108px);
+    max-height: 56px;
   }
 
   .action-group {
