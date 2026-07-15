@@ -86,6 +86,9 @@ fileInput.addEventListener("change", () => {
   }
 
   sourceUrl = URL.createObjectURL(file);
+  seek.value = 0;
+  video.currentTime = 0;
+  updateTimeLabels();
   video.src = sourceUrl;
   video.load();
   emptyState.hidden = true;
@@ -103,6 +106,7 @@ video.addEventListener("loadedmetadata", () => {
   const duration = Number.isFinite(video.duration) ? video.duration : 0;
   seek.max = Math.max(0, duration);
   seek.value = 0;
+  video.currentTime = 0;
   updateTimeLabels();
   setStatus("미리보기를 보면서 게이지로 시작 지점을 고르세요.");
 });
@@ -215,4 +219,5 @@ makeButton.addEventListener("click", async () => {
     setStatus(error.message || "GIF를 만들 수 없습니다.");
   }
 });
+
 
