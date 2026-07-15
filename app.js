@@ -1,4 +1,4 @@
-﻿const video = document.getElementById("video");
+const video = document.getElementById("video");
 const emptyState = document.getElementById("emptyState");
 const fileInput = document.getElementById("fileInput");
 const playButton = document.getElementById("playButton");
@@ -9,6 +9,7 @@ const durationTime = document.getElementById("durationTime");
 const gifDuration = document.getElementById("gifDuration");
 const gifWidth = document.getElementById("gifWidth");
 const gifFps = document.getElementById("gifFps");
+const faceMosaic = document.getElementById("faceMosaic");
 const makeButton = document.getElementById("makeButton");
 const progress = document.getElementById("progress");
 const statusText = document.getElementById("status");
@@ -19,6 +20,7 @@ const downloadLink = document.getElementById("downloadLink");
 let sourceUrl = "";
 let resultUrl = "";
 let isSeekingFromSlider = false;
+let faceDetector = null;
 
 function secondsLabel(value) {
   return `${Number(value || 0).toFixed(1)} (초)`;
@@ -73,6 +75,57 @@ function prepareCanvas(width) {
   canvas.width = width;
   canvas.height = height;
   return canvas;
+}
+
+function getFaceDetector() {
+  if (!("FaceDetector" in window)) {
+    throw new Error("이 브라우저에서는 얼굴 감지가 지원되지 않습니다. Chrome 최신 버전에서 다시 시도해 주세요.");
+  }
+
+  if (!faceDetector) {
+    faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 20 });
+  }
+
+  return faceDetector;
+}
+
+async function applyFaceMosaic(canvas, context) {
+  const detector = getFaceDetector();
+  const faces = await detector.detect(canvas);
+
+  if (!faces.length) {
+    return 0;
+  }
+
+  for (const face of faces) {
+    const box = face.boundingBox;
+    const padding = Math.max(box.width, box.height) * 0.18;
+    const x = Math.max(0, Math.floor(box.x - padding));
+    const y = Math.max(0, Math.floor(box.y - padding));
+    const width = Math.min(canvas.width - x, Math.ceil(box.width + padding * 2));
+    const height = Math.min(canvas.height - y, Math.ceil(box.height + padding * 2));
+
+    if (width < 8 || height < 8) {
+      continue;
+    }
+
+    const blockSize = Math.max(6, Math.round(Math.min(width, height) / 8));
+    const tinyWidth = Math.max(1, Math.ceil(width / blockSize));
+    const tinyHeight = Math.max(1, Math.ceil(height / blockSize));
+    const tinyCanvas = document.createElement("canvas");
+    tinyCanvas.width = tinyWidth;
+    tinyCanvas.height = tinyHeight;
+    const tinyContext = tinyCanvas.getContext("2d");
+
+    tinyContext.imageSmoothingEnabled = true;
+    tinyContext.drawImage(canvas, x, y, width, height, 0, 0, tinyWidth, tinyHeight);
+    context.save();
+    context.imageSmoothingEnabled = false;
+    context.drawImage(tinyCanvas, 0, 0, tinyWidth, tinyHeight, x, y, width, height);
+    context.restore();
+  }
+
+  return faces.length;
 }
 
 fileInput.addEventListener("change", () => {
@@ -165,6 +218,7 @@ makeButton.addEventListener("click", async () => {
     const duration = Number(gifDuration.value);
     const width = Number(gifWidth.value);
     const fps = Number(gifFps.value);
+    const shouldMosaicFaces = faceMosaic.checked;
     const frameCount = Math.max(1, Math.round(duration * fps));
     const canvas = prepareCanvas(width);
     const context = canvas.getContext("2d", { willReadFrequently: true });
@@ -176,12 +230,19 @@ makeButton.addEventListener("click", async () => {
       workerScript: "vendor/gif.worker.js"
     });
 
-    setStatus("GIF에 넣을 프레임을 준비하는 중입니다...");
+    if (shouldMosaicFaces) {
+      getFaceDetector();
+    }
+
+    setStatus(shouldMosaicFaces ? "얼굴을 감지하며 GIF 프레임을 준비하는 중입니다..." : "GIF에 넣을 프레임을 준비하는 중입니다...");
 
     for (let i = 0; i < frameCount; i += 1) {
       const time = Math.min(start + i / fps, Math.max(0, video.duration - 0.05));
       await seekVideo(time);
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      if (shouldMosaicFaces) {
+        await applyFaceMosaic(canvas, context);
+      }
       gif.addFrame(context, { copy: true, delay: 1000 / fps });
       progress.value = Math.round((i + 1) / frameCount * 70);
     }
