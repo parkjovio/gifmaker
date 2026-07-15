@@ -14,6 +14,7 @@ const progress = document.getElementById("progress");
 const statusText = document.getElementById("status");
 const result = document.getElementById("result");
 const resultImage = document.getElementById("resultImage");
+const resultMeta = document.getElementById("resultMeta");
 const downloadLink = document.getElementById("downloadLink");
 
 let sourceUrl = "";
@@ -24,16 +25,54 @@ function secondsLabel(value) {
   return `${Number(value || 0).toFixed(1)} (초)`;
 }
 
+function fileSizeLabel(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "0 KB";
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  }
+
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function setStatus(message) {
   statusText.textContent = message;
 }
 
+function videoDuration() {
+  return Number.isFinite(video.duration) ? video.duration : 0;
+}
+
+function gifDurationValue() {
+  return Number(gifDuration.value) || 0;
+}
+
+function updateSeekFill() {
+  const total = videoDuration();
+  const start = Number(seek.value) || 0;
+  const end = Math.min(total, start + gifDurationValue());
+
+  if (!total) {
+    seek.style.removeProperty("--segment-start");
+    seek.style.removeProperty("--segment-end");
+    return;
+  }
+
+  seek.style.setProperty("--segment-start", `${Math.max(0, Math.min(100, start / total * 100))}%`);
+  seek.style.setProperty("--segment-end", `${Math.max(0, Math.min(100, end / total * 100))}%`);
+}
+
 function updateTimeLabels() {
-  const duration = Number.isFinite(video.duration) ? video.duration : 0;
+  const duration = videoDuration();
   const current = video.currentTime || 0;
+  const start = Number(seek.value) || 0;
+  const end = Math.min(duration, start + gifDurationValue());
   currentTime.textContent = secondsLabel(current);
   durationTime.textContent = secondsLabel(duration);
-  startLabel.textContent = secondsLabel(seek.value);
+  startLabel.textContent = `${secondsLabel(start)} ~ ${secondsLabel(end)}`;
+  updateSeekFill();
 }
 
 function waitForEvent(target, eventName) {
@@ -96,6 +135,7 @@ fileInput.addEventListener("change", () => {
   makeButton.disabled = false;
   seek.disabled = false;
   result.hidden = true;
+  resultMeta.textContent = "";
   downloadLink.classList.add("disabled");
   downloadLink.setAttribute("aria-disabled", "true");
   downloadLink.removeAttribute("href");
@@ -108,7 +148,7 @@ video.addEventListener("loadedmetadata", () => {
   seek.value = 0;
   video.currentTime = 0;
   updateTimeLabels();
-  setStatus("미리보기를 보면서 게이지로 시작 지점을 고르세요.");
+  setStatus("노란 구간이 GIF로 만들어질 부분입니다. 게이지를 움직여 구간을 옮기세요.");
 });
 
 video.addEventListener("timeupdate", () => {
@@ -146,6 +186,8 @@ seek.addEventListener("change", async () => {
   }
 });
 
+gifDuration.addEventListener("change", updateTimeLabels);
+
 makeButton.addEventListener("click", async () => {
   if (!video.src || !Number.isFinite(video.duration)) {
     setStatus("먼저 영상 파일을 선택해 주세요.");
@@ -157,6 +199,7 @@ makeButton.addEventListener("click", async () => {
   progress.hidden = false;
   progress.value = 0;
   result.hidden = true;
+  resultMeta.textContent = "";
   video.pause();
   playButton.textContent = "재생";
 
@@ -198,6 +241,7 @@ makeButton.addEventListener("click", async () => {
       }
       resultUrl = URL.createObjectURL(blob);
       resultImage.src = resultUrl;
+      resultMeta.textContent = `최종 용량: ${fileSizeLabel(blob.size)}`;
       downloadLink.href = resultUrl;
       downloadLink.download = `gif-${duration}sec-${width}px.gif`;
       downloadLink.classList.remove("disabled");
@@ -207,7 +251,7 @@ makeButton.addEventListener("click", async () => {
       progress.hidden = true;
       makeButton.disabled = false;
       playButton.disabled = false;
-      setStatus("완료되었습니다. 아래에서 GIF를 미리보고 저장할 수 있습니다.");
+      setStatus(`완료되었습니다. 최종 용량은 ${fileSizeLabel(blob.size)}입니다.`);
       result.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
