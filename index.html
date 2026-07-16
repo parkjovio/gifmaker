@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>영상 GIF 만들기</title>
   <meta name="description" content="모바일 브라우저에서 영상 파일을 3~5초 GIF로 변환합니다.">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <main class="app">
@@ -50,7 +50,10 @@
 
         <label class="slider-block">
           <span>GIF 구간 <b id="startLabel">0.0 (초) ~ 5.0 (초)</b></span>
-          <input id="segmentSeek" class="segment-range" type="range" min="0" max="0" value="0" step="0.1" disabled>
+          <div class="segment-range-wrap">
+            <input id="segmentStartSeek" class="segment-range segment-start-range" type="range" min="0" max="0" value="0" step="0.1" aria-label="GIF 시작점" disabled>
+            <input id="segmentEndSeek" class="segment-range segment-end-range" type="range" min="0" max="0" value="5" step="0.1" aria-label="GIF 끝점" disabled>
+          </div>
         </label>
 
         <div class="time-row">
@@ -62,9 +65,10 @@
           <label>
             GIF 길이
             <select id="gifDuration">
+              <option value="1">1 (초)</option>
               <option value="3">3 (초)</option>
-              <option value="4">4 (초)</option>
               <option value="5" selected>5 (초)</option>
+              <option value="7">7 (초)</option>
             </select>
           </label>
 
@@ -103,7 +107,7 @@
   </main>
 
   <script src="vendor/gif.js"></script>
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
 
