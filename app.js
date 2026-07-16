@@ -4,6 +4,7 @@ const emptyState = document.getElementById("emptyState");
 const fileInput = document.getElementById("fileInput");
 const playButton = document.getElementById("playButton");
 const playSeek = document.getElementById("playSeek");
+const segmentDrag = document.getElementById("segmentDrag");
 const segmentStartSeek = document.getElementById("segmentStartSeek");
 const segmentEndSeek = document.getElementById("segmentEndSeek");
 const playLabel = document.getElementById("playLabel");
@@ -24,6 +25,7 @@ const downloadLink = document.getElementById("downloadLink");
 let sourceUrl = "";
 let resultUrl = "";
 let isSeekingFromSlider = false;
+let segmentDragState = null;
 
 function secondsLabel(value) {
   return `${Number(value || 0).toFixed(1)} (초)`;
@@ -61,6 +63,10 @@ function segmentEndValue() {
   return Number(segmentEndSeek.value) || 0;
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
 function normalizeSegmentRange(changedHandle) {
   const total = videoDuration();
   if (!total) {
@@ -84,6 +90,30 @@ function normalizeSegmentRange(changedHandle) {
 
   segmentStartSeek.value = start;
   segmentEndSeek.value = end;
+}
+
+function timeFromPointer(clientX) {
+  const total = videoDuration();
+  if (!total) {
+    return 0;
+  }
+
+  const rect = segmentDrag.parentElement.getBoundingClientRect();
+  const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
+  return ratio * total;
+}
+
+function moveSegmentTo(start) {
+  const total = videoDuration();
+  const duration = segmentEndValue() - segmentStartValue();
+  if (!total || duration <= 0) {
+    return;
+  }
+
+  const nextStart = clamp(start, 0, Math.max(0, total - duration));
+  segmentStartSeek.value = nextStart;
+  segmentEndSeek.value = nextStart + duration;
+  updateTimeLabels();
 }
 
 function updateSeekFill() {
@@ -249,18 +279,16 @@ async function togglePlayback(event) {
 
 playButton.addEventListener("click", togglePlayback);
 
-function pauseFromPreview(event) {
-  if (!video.src || video.paused || event.target.closest("button")) {
+async function toggleFromPreview(event) {
+  if (!video.src || event.target.closest("button")) {
     return;
   }
 
   event.preventDefault();
-  pauseVideo();
+  await togglePlayback(event);
 }
 
-preview.addEventListener("click", pauseFromPreview);
-preview.addEventListener("pointerup", pauseFromPreview);
-preview.addEventListener("touchend", pauseFromPreview, { passive: false });
+preview.addEventListener("pointerup", toggleFromPreview);
 
 playSeek.addEventListener("input", () => {
   isSeekingFromSlider = true;
@@ -299,6 +327,46 @@ segmentEndSeek.addEventListener("change", async () => {
   playSeek.value = video.currentTime || 0;
   updateTimeLabels();
 });
+
+segmentDrag.addEventListener("pointerdown", event => {
+  if (!video.src || !videoDuration()) {
+    return;
+  }
+
+  event.preventDefault();
+  const pointerTime = timeFromPointer(event.clientX);
+  segmentDragState = {
+    pointerId: event.pointerId,
+    offset: pointerTime - segmentStartValue()
+  };
+  segmentDrag.classList.add("is-dragging");
+  segmentDrag.setPointerCapture(event.pointerId);
+});
+
+segmentDrag.addEventListener("pointermove", event => {
+  if (!segmentDragState || segmentDragState.pointerId !== event.pointerId) {
+    return;
+  }
+
+  event.preventDefault();
+  moveSegmentTo(timeFromPointer(event.clientX) - segmentDragState.offset);
+});
+
+async function finishSegmentDrag(event) {
+  if (!segmentDragState || segmentDragState.pointerId !== event.pointerId) {
+    return;
+  }
+
+  segmentDragState = null;
+  segmentDrag.classList.remove("is-dragging");
+  segmentDrag.releasePointerCapture(event.pointerId);
+  await seekVideo(segmentStartValue());
+  playSeek.value = video.currentTime || 0;
+  updateTimeLabels();
+}
+
+segmentDrag.addEventListener("pointerup", finishSegmentDrag);
+segmentDrag.addEventListener("pointercancel", finishSegmentDrag);
 
 gifDuration.addEventListener("change", () => {
   const duration = videoDuration();
