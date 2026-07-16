@@ -301,6 +301,23 @@ button:disabled,
   height: 30px;
   display: grid;
   align-items: center;
+  touch-action: none;
+}
+
+.segment-drag {
+  position: absolute;
+  left: var(--segment-start, 0%);
+  right: calc(100% - var(--segment-end, 0%));
+  top: 4px;
+  z-index: 2;
+  height: 22px;
+  min-width: 22px;
+  border-radius: 999px;
+  cursor: grab;
+}
+
+.segment-drag.is-dragging {
+  cursor: grabbing;
 }
 
 input[type="range"] {
@@ -326,6 +343,7 @@ input[type="range"] {
   inset-inline: 0;
   top: 10px;
   margin: 0;
+  z-index: 3;
   pointer-events: none;
   background: linear-gradient(
     to right,
