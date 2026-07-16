@@ -4,7 +4,8 @@ const emptyState = document.getElementById("emptyState");
 const fileInput = document.getElementById("fileInput");
 const playButton = document.getElementById("playButton");
 const playSeek = document.getElementById("playSeek");
-const segmentSeek = document.getElementById("segmentSeek");
+const segmentStartSeek = document.getElementById("segmentStartSeek");
+const segmentEndSeek = document.getElementById("segmentEndSeek");
 const playLabel = document.getElementById("playLabel");
 const startLabel = document.getElementById("startLabel");
 const currentTime = document.getElementById("currentTime");
@@ -52,25 +53,54 @@ function gifDurationValue() {
   return Number(gifDuration.value) || 0;
 }
 
-function hasEnoughGifRange(start, duration) {
-  return videoDuration() - start >= duration - 0.05;
+function segmentStartValue() {
+  return Number(segmentStartSeek.value) || 0;
+}
+
+function segmentEndValue() {
+  return Number(segmentEndSeek.value) || 0;
+}
+
+function normalizeSegmentRange(changedHandle) {
+  const total = videoDuration();
+  if (!total) {
+    return;
+  }
+
+  const minDuration = Math.min(0.1, total);
+  let start = Math.max(0, Math.min(segmentStartValue(), total - minDuration));
+  let end = Math.max(minDuration, Math.min(segmentEndValue(), total));
+
+  if (end - start < minDuration) {
+    if (changedHandle === "end") {
+      start = Math.max(0, end - minDuration);
+    } else {
+      end = Math.min(total, start + minDuration);
+      if (end - start < minDuration) {
+        start = Math.max(0, end - minDuration);
+      }
+    }
+  }
+
+  segmentStartSeek.value = start;
+  segmentEndSeek.value = end;
 }
 
 function updateSeekFill() {
   const total = videoDuration();
-  const start = Number(segmentSeek.value) || 0;
-  const end = Math.min(total, start + gifDurationValue());
+  const start = segmentStartValue();
+  const end = segmentEndValue();
 
   if (!total) {
     playSeek.style.removeProperty("--play-progress");
-    segmentSeek.style.removeProperty("--segment-start");
-    segmentSeek.style.removeProperty("--segment-end");
+    document.documentElement.style.removeProperty("--segment-start");
+    document.documentElement.style.removeProperty("--segment-end");
     return;
   }
 
   playSeek.style.setProperty("--play-progress", `${Math.max(0, Math.min(100, (video.currentTime || 0) / total * 100))}%`);
-  segmentSeek.style.setProperty("--segment-start", `${Math.max(0, Math.min(100, start / total * 100))}%`);
-  segmentSeek.style.setProperty("--segment-end", `${Math.max(0, Math.min(100, end / total * 100))}%`);
+  document.documentElement.style.setProperty("--segment-start", `${Math.max(0, Math.min(100, start / total * 100))}%`);
+  document.documentElement.style.setProperty("--segment-end", `${Math.max(0, Math.min(100, end / total * 100))}%`);
 }
 
 function updatePlayButton() {
@@ -82,12 +112,13 @@ function updatePlayButton() {
 function updateTimeLabels() {
   const duration = videoDuration();
   const current = video.currentTime || 0;
-  const start = Number(segmentSeek.value) || 0;
-  const end = Math.min(duration, start + gifDurationValue());
+  const start = segmentStartValue();
+  const end = Math.min(duration, segmentEndValue());
+  const segmentDuration = Math.max(0, end - start);
   playLabel.textContent = secondsLabel(current);
   currentTime.textContent = secondsLabel(current);
   durationTime.textContent = secondsLabel(duration);
-  startLabel.textContent = `${secondsLabel(start)} ~ ${secondsLabel(end)}`;
+  startLabel.textContent = `${secondsLabel(start)} ~ ${secondsLabel(end)} / ${secondsLabel(segmentDuration)}`;
   updateSeekFill();
 }
 
@@ -142,7 +173,8 @@ fileInput.addEventListener("change", () => {
 
   sourceUrl = URL.createObjectURL(file);
   playSeek.value = 0;
-  segmentSeek.value = 0;
+  segmentStartSeek.value = 0;
+  segmentEndSeek.value = gifDurationValue();
   video.currentTime = 0;
   updateTimeLabels();
   video.src = sourceUrl;
@@ -151,7 +183,8 @@ fileInput.addEventListener("change", () => {
   playButton.disabled = false;
   makeButton.disabled = false;
   playSeek.disabled = false;
-  segmentSeek.disabled = false;
+  segmentStartSeek.disabled = false;
+  segmentEndSeek.disabled = false;
   result.hidden = true;
   resultMeta.textContent = "";
   downloadLink.classList.add("disabled");
@@ -163,13 +196,15 @@ fileInput.addEventListener("change", () => {
 video.addEventListener("loadedmetadata", () => {
   const duration = Number.isFinite(video.duration) ? video.duration : 0;
   playSeek.max = Math.max(0, duration);
-  segmentSeek.max = Math.max(0, duration);
+  segmentStartSeek.max = Math.max(0, duration);
+  segmentEndSeek.max = Math.max(0, duration);
   playSeek.value = 0;
-  segmentSeek.value = 0;
+  segmentStartSeek.value = 0;
+  segmentEndSeek.value = Math.min(duration, gifDurationValue());
   video.currentTime = 0;
   updatePlayButton();
   updateTimeLabels();
-  setStatus("재생 위치와 GIF 구간을 따로 조절할 수 있습니다. 노란 구간이 GIF로 만들어질 부분입니다.");
+  setStatus("GIF 구간의 시작점과 끝점을 자유롭게 조절할 수 있습니다. 노란 구간이 GIF로 만들어질 부분입니다.");
 });
 
 video.addEventListener("timeupdate", () => {
@@ -241,13 +276,45 @@ playSeek.addEventListener("change", async () => {
   }
 });
 
-segmentSeek.addEventListener("input", updateTimeLabels);
-segmentSeek.addEventListener("change", async () => {
-  await seekVideo(Number(segmentSeek.value));
+segmentStartSeek.addEventListener("input", () => {
+  normalizeSegmentRange("start");
+  updateTimeLabels();
+});
+
+segmentStartSeek.addEventListener("change", async () => {
+  normalizeSegmentRange("start");
+  await seekVideo(segmentStartValue());
   playSeek.value = video.currentTime || 0;
   updateTimeLabels();
 });
-gifDuration.addEventListener("change", updateTimeLabels);
+
+segmentEndSeek.addEventListener("input", () => {
+  normalizeSegmentRange("end");
+  updateTimeLabels();
+});
+
+segmentEndSeek.addEventListener("change", async () => {
+  normalizeSegmentRange("end");
+  await seekVideo(segmentEndValue());
+  playSeek.value = video.currentTime || 0;
+  updateTimeLabels();
+});
+
+gifDuration.addEventListener("change", () => {
+  const duration = videoDuration();
+  const preset = gifDurationValue();
+  let start = segmentStartValue();
+  let end = start + preset;
+
+  if (duration && end > duration) {
+    end = duration;
+    start = Math.max(0, end - preset);
+  }
+
+  segmentStartSeek.value = start;
+  segmentEndSeek.value = end;
+  updateTimeLabels();
+});
 
 makeButton.addEventListener("click", async () => {
   if (!video.src || !Number.isFinite(video.duration)) {
@@ -255,10 +322,11 @@ makeButton.addEventListener("click", async () => {
     return;
   }
 
-  const start = Number(segmentSeek.value) || 0;
-  const duration = Number(gifDuration.value);
-  if (!hasEnoughGifRange(start, duration)) {
-    setStatus(`선택한 구간이 ${duration} (초)보다 짧습니다. 시작 시간을 앞쪽으로 옮기거나 GIF 길이를 줄여 주세요.`);
+  const start = segmentStartValue();
+  const end = segmentEndValue();
+  const duration = end - start;
+  if (duration < 0.1) {
+    setStatus("GIF 구간의 끝점은 시작점보다 뒤에 있어야 합니다.");
     return;
   }
 
